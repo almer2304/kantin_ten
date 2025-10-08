@@ -1,138 +1,188 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <title>Menu Kantin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
-  <body>
+  <body class="bg-light">
     <div class="container">
-      @if (session('status'))
-        <div class="alert alert-success" role="alert">
-            {{ session('status') }}
-        </div>
-      @endif
-      <div class="card mt-3">
-        <h1 class="text-warning pl-3">Buat menu baru!</h1>
-          <form action="{{ route('store_menu') }}" method="POST">
+      <div class="card mt-5 shadow-sm">
+        <div class="card-body">
+          <h4 class="fw-bold mb-3">➕ Tambah Menu Baru</h4>
+          <form action="{{ route('store_menu') }}" method="POST" enctype="multipart/form-data">
             @csrf
-              <div class="card-body">
-                  <div class="mb-3">
-                        <label for="">Nama<span class="text-danger">*</span></label>
-                        <input type="text" name="nama" class="form-control" required maxlength="50">
-                    </div>
-                    <div class="mb-3">
-                        <label for="">Harga</label>
-                        <input type="number" name="harga" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label for="">Kategori</label>
-                        <input type="text" name="kategori" class="form-control">
-                    </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="nama" class="form-label">Nama Menu</label>
+                <input type="text" class="form-control" id="nama" name="nama" required>
               </div>
-              <div class="card-footer">
-                    <button type="submit" class="btn btn-primary">Buat</button>
+              <div class="col-md-2">
+                <label for="harga" class="form-label">Harga</label>
+                <input type="number" class="form-control" id="harga" name="harga" required>
               </div>
+              <div class="col-md-2">
+                <label for="stok" class="form-label">Stok</label>
+                <input type="number" class="form-control" id="stok" name="stok" required>
+              </div>
+              <div class="col-md-2">
+                <label for="kategori" class="form-label">Kategori</label>
+                <select id="kategori" name="kategori" class="form-select">
+                  <option value="makanan">Makanan</option>
+                  <option value="minuman">Minuman</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="gambar" class="form-label">Gambar</label>
+                <input type="file" class="form-control" id="gambar" name="gambar" accept="image/*">
+              </div>
+            </div>
+            <button class="btn btn-primary mt-3">Simpan Menu</button>
           </form>
         </div>
       </div>
+    </div>
 
-      <div class="container">
-        <div class="card mt-5">
-            <div class="card-header">
-                <h2>Daftar menu yang ada di kantin</h2>
-                  <div class="btn-group mb-3" role="group">
-                    <a href="{{ route('dashboard') }}" class="btn {{ !request('kategori') ? 'btn-primary' : 'btn-secondary' }}">Semua</a>
-                    <a href="{{ route('dashboard', ['kategori' => 'makanan']) }}" class="btn {{ request('kategori') == 'makanan' ? 'btn-primary' : 'btn-secondary' }}">Makanan</a>
-                    <a href="{{ route('dashboard', ['kategori' => 'minuman']) }}" class="btn {{ request('kategori') == 'minuman' ? 'btn-primary' : 'btn-secondary' }}">Minuman</a>
-                  </div>
+    <div class="container py-5">
+      <h1 class="text-center mb-4 fw-bold">🍱 Daftar Menu Kantin</h1>
+
+      {{-- Pesan sukses/error --}}
+      @if(session('success'))
+        <div class="alert alert-success text-center">{{ session('success') }}</div>
+      @endif
+
+      @if(session('error'))
+        <div class="alert alert-danger text-center">{{ session('error') }}</div>
+      @endif
+
+      {{-- Filter kategori --}}
+      <form method="GET" action="{{ route('dashboard') }}" class="mb-4 text-center">
+        <select name="kategori" onchange="this.form.submit()" class="form-select w-auto d-inline-block">
+          <option value="">Semua Kategori</option>
+          <option value="makanan" {{ request('kategori') == 'makanan' ? 'selected' : '' }}>Makanan</option>
+          <option value="minuman" {{ request('kategori') == 'minuman' ? 'selected' : '' }}>Minuman</option>
+        </select>
+      </form>
+
+      {{-- Daftar produk --}}
+      <div class="row">
+        @forelse ($produk_kantin as $produk)
+          <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+              {{-- Gambar produk --}}
+              @if($produk->gambar)
+                <img src="{{ asset('storage/' . $produk->gambar) }}" 
+                     alt="{{ $produk->nama }}" 
+                     class="card-img-top"
+                     style="height: 180px; object-fit: cover;">
+              @else
+                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" 
+                     style="height: 180px;">
+                     <small>Tidak ada gambar</small>
+                </div>
+              @endif
+
+              {{-- Isi kartu --}}
+              <div class="card-body">
+                <h5 class="card-title">{{ $produk->nama }}</h5>
+                <p class="card-text mb-1 text-success fw-semibold">Rp {{ number_format($produk->harga, 0, ',', '.') }}</p>
+                <p class="mb-2">
+                  Stok:
+                  @if($produk->stok > 10)
+                    <span class="badge bg-success">{{ $produk->stok }}</span>
+                  @elseif($produk->stok > 0)
+                    <span class="badge bg-warning text-dark">{{ $produk->stok }}</span>
+                  @else
+                    <span class="badge bg-danger">Habis</span>
+                  @endif
+                </p>
+
+                {{-- Tombol aksi --}}
+                <div class="d-flex justify-content-between align-items-center gap-1">
+                  {{-- Tombol beli --}}
+                  <form action="{{ route('beli_menu', $produk) }}" method="POST" class="flex-fill">
+                    @csrf
+                    <input type="number" name="nominal" class="form-control form-control-sm mb-2" placeholder="Masukkan uang" required>
+                    <button class="btn btn-success btn-sm w-100">Beli</button>
+                  </form>
+
+                  {{-- Tombol Edit --}}
+                  <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $produk->id }}">Edit</button>
+
+                  {{-- Tombol Hapus --}}
+                  <form action="{{ route('delete_menu', $produk) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus menu ini?')" class="flex-fill">
+                    @csrf
+                    @method('DELETE')
+                    <button class="btn btn-danger btn-sm w-100">Hapus</button>
+                  </form>
+                </div>
+              </div>
             </div>
-            <div class="card-body">
-                @foreach ($produk_kantin as $produk)
-                    <div class="card mt-3">
-                      <div class="card-body">
-                          <div class="row">
-                            <div class="col">
-                                <h3>{{ $produk->nama }}</h3>
-                                <h3>{{ $produk->harga }}</h3>
-                                
+          </div>
 
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editButton{{ $produk->id }}">Edit</button>
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteButton{{ $produk->id }}">Hapus</button>
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#buyButton{{ $produk->id }}">Beli</button>
-                                <!-- modal edit -->
-                                <div class="modal fade" id="editButton{{ $produk->id }}" tabindex="-1" aria-hidden="true">
-                                  <div class="modal-dialog">
-                                    <div class="modal-content">
-                                      <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Edit menu</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                      </div>
-                                      <div class="modal-body">
-                                        <form action="{{ route('update_menu', $produk)}}"method="POST">
-                                          @csrf
-                                          @method('PUT')
-                                          <div class="mb-3">
-                                              <label for="">Nama<span class="text-danger">*</span></label>
-                                              <input value="{{ $produk->nama }}" type="text" name="nama" class="form-control" required maxlength="50">
-                                          </div>
-                                          <div class="mb-3">
-                                              <label for="">Harga</label>
-                                              <input value="{{ $produk->harga }}"type="number" name="harga" class="form-control">
-                                          </div>
-                                          <div class="mb-3">
-                                              <label for="">Kategori</label>
-                                              <input value="{{ $produk->kategori }}"type="text" name="kategori" class="form-control">
-                                          </div>
-                                          <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                            <button type="submit" class="btn btn-primary">Edit</button>
-                                          </div>
-                                        </form>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                <!-- modal delete -->
-                                <div class="modal fade" id="deleteButton{{ $produk->id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                  <div class="modal-dialog">
-                                    <div class="modal-content">
-                                      <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="exampleModalLabel">HAPUS?</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                      </div>
-                                      <form action="{{ route('delete_menu', $produk) }}" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <div class="modal-body">
-                                          <h5 class="text-danger">Apakah kau yakin ingin menghapus menu {{ $produk->nama }}</h5>
-                                        </div>
-                                        <div class="modal-footer">
-                                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                          <button type="submit" class="btn btn-danger">Hapus</button>
-                                        </div>
-                                      </form>
-                                    </div>
-                                  </div>
-                                </div>
-                            </div>
-                            <div class="col d-flex justify-content-end align-items-center">
-                              @if ($produk->kategori == 'makanan')
-                              <span class="badge text-bg-success">{{ $produk->kategori }}</span>
-                                 @else
-                                  <span class="badge text-bg-primary">{{ $produk->kategori }}</span>
-                                 @endif
-                            </div>
-                          </div>
-                      </div>
+          {{-- Modal Edit Produk --}}
+          <div class="modal fade" id="editModal{{ $produk->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $produk->id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                  <h5 class="modal-title" id="editModalLabel{{ $produk->id }}">Edit Menu: {{ $produk->nama }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <form action="{{ route('update_menu', $produk->id) }}" method="POST" enctype="multipart/form-data">
+                  @csrf
+                  @method('PUT')
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">Nama Menu</label>
+                      <input type="text" name="nama" class="form-control" value="{{ $produk->nama }}" required>
                     </div>
-                @endforeach
-            </div>
-        </div>
-      </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+                    <div class="mb-3">
+                      <label class="form-label">Harga</label>
+                      <input type="number" name="harga" class="form-control" value="{{ $produk->harga }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Stok</label>
+                      <input type="number" name="stok" class="form-control" value="{{ $produk->stok }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Kategori</label>
+                      <select name="kategori" class="form-select">
+                        <option value="makanan" {{ $produk->kategori == 'makanan' ? 'selected' : '' }}>Makanan</option>
+                        <option value="minuman" {{ $produk->kategori == 'minuman' ? 'selected' : '' }}>Minuman</option>
+                      </select>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Gambar (opsional)</label>
+                      <input type="file" name="gambar" class="form-control">
+                      @if($produk->gambar)
+                        <small class="text-muted">Gambar saat ini:</small><br>
+                        <img src="{{ asset('storage/' . $produk->gambar) }}" alt="Gambar Lama" width="80" class="rounded mt-1">
+                      @endif
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning text-white">Update</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        @empty
+          <div class="col-12 text-center text-muted mt-4">
+            <p>Tidak ada menu kantin tersedia.</p>
+          </div>
+        @endforelse
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('product_kantins', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
-            $table->bigInteger('harga');
+            $table->integer('harga');
+            $table->integer('stok');
             $table->string('gambar')->nullable();
             $table->enum('kategori', ['makanan', 'minuman'])->nullable();
             $table->timestamps();
